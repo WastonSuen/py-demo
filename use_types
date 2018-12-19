@@ -1,0 +1,72 @@
+# -*- coding: utf-8 -*-
+import types
+
+
+class VariableObject(object):
+    # this attr is variable
+    values = list()
+
+
+class SubObjectOne(VariableObject):
+    pass
+
+
+class SubObjectTwo(VariableObject):
+    pass
+
+
+TypeObjectOne = type("TypeObjectOne", (VariableObject,), {"values": list()})
+TypeObjectTwo = type("TypeObjectTwo", (VariableObject,), {"values": list()})
+
+
+def dynamic_func(self, *args, **kwargs):
+    print "just print..."
+    print "self: %s, args: %s, kwargs: %s." % (self, args, kwargs)
+
+
+class DynamicMethodObject(object):
+    def __init__(self, func_name):
+        self._add_dynamic_method(func_name)
+
+    def _add_dynamic_method(self, method_name):
+        u"""dynamically add method."""
+        setattr(self, method_name,
+                types.MethodType(dynamic_func, self))
+
+
+new_dynamic_func = types.FunctionType(
+    dynamic_func.__code__, dynamic_func.__globals__, dynamic_func.func_name,
+    dynamic_func.__defaults__, dynamic_func.__closure__)
+
+
+def test_for_inheriting():
+    obj_one = SubObjectOne()
+    obj_two = SubObjectTwo()
+    obj_one.values.append('item_one')
+    assert obj_one.values == obj_two.values == ['item_one']
+
+
+def test_for_type():
+    obj_one = TypeObjectOne()
+    obj_two = TypeObjectTwo()
+    obj_one.values.append('item_one')
+    assert obj_one.values == ['item_one']
+    assert obj_two.values == list()
+    assert TypeObjectOne.__name__ == 'TypeObjectOne'
+    assert TypeObjectTwo.__name__ == 'TypeObjectTwo'
+
+
+def test_for_dynamic_func():
+    obj = DynamicMethodObject("print_params")
+    obj.print_params(1, 2, 3, four=4)
+
+
+def test_for_copy_of_dynamic_func():
+    new_dynamic_func("self", 1, 2, 3, four=4)
+
+
+if __name__ == '__main__':
+    test_for_inheriting()
+    test_for_type()
+    test_for_dynamic_func()
+    test_for_copy_of_dynamic_func()
